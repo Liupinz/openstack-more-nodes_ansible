@@ -1,0 +1,10 @@
+- name: set hostname
+  hostname: name={{inventory_hostname}}
+
+- name: add host file
+  lineinfile:
+      dest: /etc/hosts
+      regexp: '::1'
+      line: '{{ item.ip}}       {{ item.name }}'
+  with_items: "{{ ALL_NODES }}"
+

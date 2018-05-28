@@ -1,0 +1,13 @@
+#!/bin/bash
+
+source /root/admin-openrc
+openstack project create --domain default --description "Service Project" service
+openstack project create --domain default --description "Demo Project" demo
+
+/usr/bin/expect <<EOF
+spawn openstack user create --domain default --password-prompt demo
+    expect "User Password:"
+    send "123456\r"
+    expect "Repeat User Password:"
+    send "123456\r"
+    expect eof

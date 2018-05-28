@@ -1,0 +1,13 @@
+- name: install rabbitmq
+  yum: name=rabbitmq-server state=installed
+
+- name: start rabbitmq-server
+  service: name=rabbitmq-server state=started enabled=yes
+
+- name: useradd openstack
+  command: rabbitmqctl add_user openstack 123456 
+  ignore_errors: true
+
+- name: useradd openstack
+  command: rabbitmqctl set_permissions openstack ".*" ".*" ".*"
+  ignore_errors: true

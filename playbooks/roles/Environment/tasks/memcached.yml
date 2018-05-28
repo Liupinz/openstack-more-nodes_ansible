@@ -1,0 +1,15 @@
+- name: install Memcached
+  yum: name={{item}} state=installed
+  with_items:
+      - memcached 
+      - python-memcached
+
+- name: modify the /etc/sysconfig/memcached file 
+  lineinfile:
+      dest: /etc/sysconfig/memcached
+      regexp: '^OPTIONS'
+      line: 'OPTIONS=-l "{{ansible_host}}",::1,controller'
+
+- name: restart memcached
+  service: name=memcached state=started enabled=yes
+

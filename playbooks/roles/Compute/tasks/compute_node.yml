@@ -1,0 +1,14 @@
+- name: Install nova-compute packages
+  yum: name=openstack-nova-compute state=present
+
+- name: Edit /etc/nova/nova.conf file
+  template: src=templates/nova.conf.j2 dest=/etc/nova/nova.conf 
+
+- name: Start the Compute service
+  service: name={{item}} state=started enabled=yes
+  with_items:
+      - libvirtd
+      - openstack-nova-compute
+- name: Discover compute hosts
+  command: su -s /bin/sh -c "nova-manage cell_v2 discover_hosts --verbose" nova
+

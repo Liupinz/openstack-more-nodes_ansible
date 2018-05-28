@@ -1,0 +1,129 @@
+- name: Create the nova_api, nova, and nova_cell0 databases
+  mysql_db: name={{ item  }} login_user=root login_password=123456 state=present
+  with_items:
+      - nova_api
+      - nova
+      - nova_cell0
+
+- name: Grant proper access to nova databases
+  mysql_user:
+      login_user: root
+      login_password: 123456
+      name: nova
+      password: 123456
+      host: "{{ item }}"
+      state: "present"
+      priv: "nova.*:ALL,GRANT"
+  with_items:
+      - "localhost"
+      - "%"
+
+- name: Grant proper access to nova_api databases
+  mysql_user:
+      login_user: root
+      login_password: 123456
+      name: nova
+      append_privs: yes
+      password: 123456
+      host: "{{ item }}"
+      state: "present"
+      priv: "nova_api.*:ALL,GRANT"
+  with_items:
+      - "localhost"
+      - "%"
+
+- name: Grant proper access to nova_cell0 databases
+  mysql_user:
+      login_user: root
+      login_password: 123456
+      name: nova
+      append_privs: yes
+      password: 123456
+      host: "{{ item }}"
+      state: "present"
+      priv: "nova_cell0.*:ALL,GRANT"
+  with_items:
+      - "localhost"
+      - "%"
+
+#Create the nova user
+- name: Create the nova user
+  template: src=templates/create_nova_user.j2 dest=/root/create_nova_user.sh mode=777
+
+- name: Create the nova user
+  command: bash /root/create_nova_user.sh
+
+#Add the admin role to the nova user
+- name: Add the admin role to the nova user
+  shell: source /root/admin-openrc && openstack role add --project service --user nova admin
+
+- name: Create the nova service entity
+  shell: source /root/admin-openrc && openstack service create --name nova --description "OpenStack Compute" compute
+
+#Create the Compute AP
+- name: Create the Compute API service endpoints
+  template: src=templates/create_compute_api.j2 dest=/root/create_compute_api.sh mode=777
+
+- name: Create compute api endpoints
+  command: bash /root/create_compute_api.sh
+
+#Create a Placement
+- name: Create a Placement service user
+  template: src=templates/create_placement_service.j2 dest=/root/create_placement_service.sh mode=777
+
+- name: Create a Placement service user 
+  command: bash /root/create_placement_service.sh
+
+#add user to admin role
+- name: Add the Placement user to the service project with the admin role
+  shell: source /root/admin-openrc && openstack role add --project service --user placement admin
+
+#Create api
+- name: Create the Placement API service and endpoint
+  template: src=templates/create_plancement_api.j2 dest=/root/create_plancement_api.sh mode=777
+
+- name: Create the Placement API service and endpoint
+  command: bash /root/create_plancement_api.sh
+
+#Install package and edit file
+- name: Install the nova packages
+  yum: name={{item}} state=installed
+  with_items:
+      - openstack-nova-api
+      - openstack-nova-conductor
+      - openstack-nova-console
+      - openstack-nova-novncproxy
+      - openstack-nova-scheduler
+      - openstack-nova-placement-api
+
+
+- name: Edit the /etc/nova/nova.conf file
+  template: src=templates/nova.conf.j2 dest=/etc/nova/nova.conf
+
+- name: Due to a packaging bug
+  template: src=templates/00-nova-placement-api.conf.j2 dest=/etc/httpd/conf.d/00-nova-placement-api.conf
+
+- name: Restart the httpd service
+  service: name=httpd state=restarted
+
+- name: Populate the nova-api database
+  command: su -s /bin/sh -c "nova-manage api_db sync" nova
+
+- name: Register the cell0 database
+  command: su -s /bin/sh -c "nova-manage cell_v2 map_cell0" nova
+
+- name: Create the cell1 cell
+  command: su -s /bin/sh -c "nova-manage cell_v2 create_cell --name=cell1 --verbose" nova
+
+- name: Populate the nova database
+  command: su -s /bin/sh -c "nova-manage db sync" nova
+
+- name: start and enable service
+  service: name={{item}} state=started enabled=yes
+  with_items:
+      - openstack-nova-api
+      - openstack-nova-consoleauth 
+      - openstack-nova-scheduler
+      - openstack-nova-conductor
+      - openstack-nova-novncproxy
+

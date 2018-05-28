@@ -1,0 +1,33 @@
+#install openstack 
+- hosts: Controller
+  gather_facts: no
+  vars_files:
+     - ./group_vars/all.yml
+  roles:
+     - Environment
+     - Identity
+     - Image
+     - Compute
+     - Network
+     - Dashboard
+
+- hosts: Compute
+  gather_facts: no
+  vars_files:
+     - ./group_vars/all.yml
+  roles:
+     - Compute_nodes
+
+- hosts: Controller
+  gather_facts: no
+  vars_files:
+      - ./group_vars/all.yml
+  roles:
+      - discover_compute
+
+- hosts: Compute
+  gather_facts: no
+  vars_files:
+      - ./group_vars/all.yml
+  roles:
+      - network_node

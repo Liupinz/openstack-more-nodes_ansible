@@ -1,0 +1,17 @@
+- name: change repo
+  template: src=templates/CentOS-Base.repo.j2 dest=/etc/yum.repos.d/CentOS-Base.repo
+
+- name: yum clean
+  shell: yum clean all && yum makecache
+
+- include: host-config.yml
+
+- include: ntp.yml
+
+- include: openstack-package.yml
+
+- include: sql.yml
+
+- include: rabbitmq.yml
+
+- include: memcached.yml

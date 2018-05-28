@@ -1,0 +1,46 @@
+- name: create glance database
+  mysql_db: name=glance login_user=root login_password=123456 state=present
+
+- name: Grant proper access to the glance database
+  mysql_user:
+      login_user: root
+      login_password: 123456
+      name: glance
+      password: 123456
+      host: "{{ item  }}"
+      state: present
+      priv: "glance.*:ALL,GRANT"
+  with_items:
+      - "localhost"
+      - "%"
+
+- name: Create the glance user
+  template: src=templates/create_glance_user.j2 dest=/root/create_glance_user.sh mode=777
+
+- name: bash create_glance_user.sh
+  command: bash /root/create_glance_user.sh
+
+- name: Add the admin role to the glance user and service project
+  shell: source /root/admin-openrc && openstack role add --project service --user glance admin
+
+- name: Create glance api
+  template: src=templates/create_glance_api.j2 dest=/root/create_glance_api.sh mode=777
+
+- name: bash create_glance_api.sh
+  command: bash create_glance_api.sh
+
+- name: Install the packages
+  yum: name=openstack-glance state=installed
+
+- name: Edit the /etc/glance/glance-api.conf file
+  template: src=templates/glance-api.conf.j2 dest=/etc/glance/glance-api.conf owner=root group=glance
+
+- name: Edit the /etc/glance/glance-registry.conf file
+  template: src=templates/glance-registry.conf.j2 dest=/etc/glance/glance-registry.conf owner=root group=glance
+
+- name: Populate the Image service database
+  command: su -s /bin/sh -c "glance-manage db_sync" glance
+
+- name: start and enable openstack-glance-api
+  service: name=openstack-glance-api state=started enabled=yes
+

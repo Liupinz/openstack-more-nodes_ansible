@@ -1,0 +1,91 @@
+- name: Create neutron database
+  mysql_db: name=neutron login_user=root login_password=123456 state=present
+
+- name: Grant proper access to the neutron database
+  mysql_user:
+       login_user: root
+       login_password: 123456
+       name: neutron
+       password: 123456
+       host: "{{ item }}"
+       state: "present"
+       priv: "neutron.*:ALL,GRANT"
+  with_items:   
+      - "localhost"
+      - "%"
+
+- name: template neutron user template
+  template: src=templates/create_neutron_user.j2 dest=/root/create_neutron_user.sh mode=777
+
+- name: create neutron user
+  shell: bash /root/create_neutron_user.sh
+
+- name: wait a monment
+  pause: seconds=5
+  
+- name: create neutron user again
+  command: bash /root/create_neutron_user.sh
+  ignore_errors: true 
+
+- name: create neutron user again
+  command: bash /root/create_neutron_user.sh
+  ignore_errors: true
+
+- name: Add the admin role to the neutron user
+  shell: source /root/admin-openrc && openstack role add --project service --user neutron admin
+
+- name: create neutron service and api
+  template: src=templates/create_neutron_api.j2 dest=/root/create_neutron_api.sh mode=777
+
+- name: bash
+  command: bash /root/create_neutron_api.sh
+
+- name: Install the components
+  yum: name={{item}} state=installed
+  with_items:
+      - openstack-neutron
+      - openstack-neutron-ml2
+      - openstack-neutron-linuxbridge
+      - ebtables
+
+- name: Edit the /etc/neutron/neutron.conf file
+  template: src=templates/neutron.conf.j2 dest=/etc/neutron/neutron.conf
+
+- name: Edit the /etc/neutron/plugins/ml2/ml2_conf.ini file
+  template: src=templates/ml2_conf.ini.j2 dest=/etc/neutron/plugins/ml2/ml2_conf.ini
+
+- name: Edit /etc/neutron/plugins/ml2/linuxbridge_agent.ini file
+  template: src=templates/linuxbridge_agent.ini.j2 dest=/etc/neutron/plugins/ml2/linuxbridge_agent.ini
+
+- name: Edit the /etc/neutron/l3_agent.ini 
+  lineinfile:
+      dest: /etc/neutron/l3_agent.ini 
+      regexp: '^#interface_driver'
+      line: 'interface_driver = linuxbridge'
+
+- name: Edit the /etc/neutron/dhcp_agent.ini file
+  template: src=templates/dhcp_agent.ini.j2 dest=/etc/neutron/dhcp_agent.ini
+
+- name: Edit /etc/neutron/metadata_agent.ini file
+  template: src=templates/metadata_agent.ini.j2 dest=/etc/neutron/metadata_agent.ini 
+
+- name: Edit the /etc/nova/nova.conf
+  template: src=templates/nova.conf.j2 dest=/etc/nova/nova.conf
+
+- name: Finalize installation
+  command: ln -s /etc/neutron/plugins/ml2/ml2_conf.ini /etc/neutron/plugin.ini
+
+- name: Populate the database
+  command: su -s /bin/sh -c "neutron-db-manage --config-file /etc/neutron/neutron.conf --config-file /etc/neutron/plugins/ml2/ml2_conf.ini upgrade head" neutron
+
+- name: Restart the Compute API service
+  service: name=openstack-nova-api state=restarted
+
+- name: start and enable service
+  service: name={{item}} state=started enabled=yes
+  with_items:
+      - neutron-server
+      - neutron-linuxbridge-agent
+      - neutron-dhcp-agent
+      - neutron-metadata-agent
+      - neutron-l3-agent

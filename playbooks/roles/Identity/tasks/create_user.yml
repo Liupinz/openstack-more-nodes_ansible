@@ -1,0 +1,71 @@
+- name: copy file 
+  copy: src=files/admin-openrc dest=/root/admin-openrc
+
+- name: copy
+  template: src=templates/create_keystone.j2 dest=/root/create_keystone.sh mode=777
+
+- name: create service,demo project and demo user
+  command: bash /root/create_keystone.sh
+
+- name: wait a monment
+  pause: seconds=5
+
+- name: create service,demo project and demo user again
+  command: bash /root/create_keystone.sh
+  ignore_errors: true  
+
+- name: Create the user role
+  shell: source /root/admin-openrc && openstack role create user
+
+- name: Add the user role to the demo user of the demo project
+  shell: source /root/admin-openrc && openstack role add --project demo --user demo user
+#- name: create a service project
+#  shell: source /root/admin-openrc && openstack project create --domain default --description "Service Project" service
+#
+#- name: Create the demo project
+#  shell: source /root/admin-openrc && openstack project create --domain default --description "Demo Project" demo
+#
+#- name: Create the demo user
+#  shell: source /root/admin-openrc && openstack user create --domain default --password-prompt demo
+#
+#- name: Create the user role
+#  shell: source /root/admin-openrc && openstack role create user
+#
+#- name: Add the user role to the demo user of the demo project
+#  shell: openstack role add --project demo --user demo user
+#- name: Create a service project
+#  keystone:
+#    command: "ensure_project"
+#    domain_name: "Default"
+#    description: "Service project"
+#    endpoint: "http://controller:35357/v3"
+#    project_name: "service"
+#    token: "123456"
+#
+#- name: Create a demo project
+#  keystone:
+#    command: "ensure_project"
+#    project_name: "demo"
+#    domain_name: "Default"
+#    description: "Demo project"
+#
+#- name: Create the demo user
+#  keystone:
+#    command: "ensure_user"
+#    domain_name: "Default"
+#    user_name: "demo"
+#    password: "123456"
+#
+#- name: Create the user role
+#  keystone:
+#    command: "ensure_user"
+#    role_name: "user"
+#
+#- name: Add the user role to the demo project and user
+#  keystone:
+#    command: "ensure_user_role"
+#    project_name: "demo"
+#    role_name: "user"
+#    user_name: "demo"
+#
+

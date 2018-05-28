@@ -1,0 +1,5 @@
+- name: 01
+  include: controller_node.yml
+
+#- name: 02
+#  include: compute_node.yml

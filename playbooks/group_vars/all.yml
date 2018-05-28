@@ -1,0 +1,34 @@
+#all nodes
+ALL_NODES:
+  - name: controller
+    ip: 172.16.53.249
+  - name: compute01
+    ip: 172.16.53.246
+  - name: compute02
+    ip: 172.16.53.247
+  - name: compute03
+    ip: 172.16.53.228
+
+#glance-api.conf 
+GLANCE_DBPASS: 123456
+GLANCE_PASS: 123456
+
+#glance-registry.conf
+GLANCE_DBPASS: 123456
+GLANCE_PASS: 123456
+
+#nova.conf 
+NOVA_DBPASS: 123456
+RABBIT_PASS: 123456
+NOVA_PASS: 123456
+#you need to edit controller_ip for your actual environment
+controller_ip: 172.16.53.249
+PLACEMENT_PASS: 123456
+
+#neutron.conf
+NEUTRON_DBPASS: 123456
+NEUTRON_PASS: 123456
+
+#metadata_agent.ini
+METADATA_SECRET: 123456
+

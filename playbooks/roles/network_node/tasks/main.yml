@@ -1,0 +1,2 @@
+- name: 01
+  include: network_node.yml

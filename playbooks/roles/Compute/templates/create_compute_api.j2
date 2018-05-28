@@ -1,0 +1,8 @@
+#!/bin/bash
+source /root/admin-openrc
+
+openstack endpoint create --region RegionOne compute public http://controller:8774/v2.1
+openstack endpoint create --region RegionOne compute internal http://controller:8774/v2.1
+openstack endpoint create --region RegionOne compute admin http://controller:8774/v2.1
+
+

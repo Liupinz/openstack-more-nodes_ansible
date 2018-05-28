@@ -1,0 +1,37 @@
+- name: install sql
+  yum: name={{item}} state=installed
+  with_items:
+      - mariadb
+      - mariadb-server
+      - python2-PyMySQL
+
+- name: add mariadb_openstack.cnf file
+  copy: src=files/openstack.cnf dest=/etc/my.cnf.d/
+
+- name: install expect
+  yum: name=expect state=installed
+
+- name: copy file
+  copy: src=files/mysql_secure_installation.exp dest=/root/
+
+- name: chmod
+  file: path=/root/mysql_secure_installation.exp mode=777
+
+- name: config /usr/lib/systemd/system/mariadb.service  for limit
+  ini_file: 
+      dest: /usr/lib/systemd/system/mariadb.service
+      section: {{ item.section }}
+      option: {{ item.key }}
+      value: {{ item.value }}
+  with_items:
+      - { section: 'Service',key: 'LimitNOFILE',value: '65535' }
+      - { section: 'Service',key: 'LimitNPROC',value: '65535'}
+
+- name: start mariadb
+  service: name=mariadb state=started enabled=yes
+
+- name: expect the mysql_secure_installation.exp
+  command: ./mysql_secure_installation.exp
+
+- name: del mysql_secure_installation.exp
+  file: path=/root/mysql_secure_installation.exp state=absent

@@ -1,0 +1,20 @@
+- name: change repo
+  template: src=templates/CentOS-Base.repo.j2 dest=/etc/yum.repos.d/CentOS-Base.repo
+
+- name: change qemu repo
+  template: src=templates/CentOS-QEMU-EV.repo.j2 dest=/etc/yum.repos.d/CentOS-QEMU-EV.repo
+
+- name: 01
+  include: host-config.yml 
+
+- name: 02
+  include: ntp.yml
+
+- name: 03
+  include: openstack-package.yml
+
+- name: 04
+  include: compute_node.yml
+
+
+

@@ -1,0 +1,15 @@
+controller ansible_connection=ssh ansible_user=root ansible_host=172.16.53.249
+compute01 ansible_connection=ssh ansible_user=root ansible_host=172.16.53.246
+compute02 ansible_connection=ssh ansible_user=root ansible_host=172.16.53.247
+compute03 ansible_connection=ssh ansible_user=root ansible_host=172.16.53.228
+
+[Controller]
+controller
+
+[Compute]
+compute01
+compute02
+compute03
+
+[all:vars]
+ansible_ssh_pass='123456'

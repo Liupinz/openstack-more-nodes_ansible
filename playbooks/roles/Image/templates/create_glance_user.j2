@@ -1,0 +1,11 @@
+#!/bin/bash
+
+source /root/admin-openrc
+
+/usr/bin/expect <<EOF
+spawn openstack user create --domain default --password-prompt glance
+    expect "User Password:"
+    send "123456\r"
+    expect "Repeat User Password:"
+    send "123456\r"
+    expect eof
