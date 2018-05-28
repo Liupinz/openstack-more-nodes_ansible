@@ -27,6 +27,9 @@
       - { section: 'Service',key: 'LimitNOFILE',value: '65535' }
       - { section: 'Service',key: 'LimitNPROC',value: '65535'}
 
+- name: daemon-reload
+  shell: systemctl daemon-reload
+
 - name: start mariadb
   service: name=mariadb state=started enabled=yes
 
